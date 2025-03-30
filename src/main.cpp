@@ -1,25 +1,46 @@
 #include <Arduino.h>
-#define OUTPUT_PIN 33
 
-int freq = 1000;
-const int ledcChannel = 0;
-const int resolution = 2;
+#include "servo.h"
+#define DIRECTION_PIN 32
+#define PULSE_PIN 33
+#define COUNT_PIN 25
+#define ANALOG_PIN 26
 
-void setFrequency(uint32_t newFreq) {
-    if (newFreq == 0) {
-        ledcWrite(ledcChannel, 0);
-    } else {
-        ledcSetup(ledcChannel, newFreq, resolution);
-        ledcWrite(ledcChannel, 2);
-    }
-}
+Servo servo;
+
+const uint16_t MAX_POSITION = 8000;
+unsigned long lastPrint = 0;
+unsigned long lastUpdate = 0;
+bool state = false;
+long position = 0;
 
 void setup() {
-    ledcSetup(ledcChannel, freq, resolution);
-    ledcAttachPin(OUTPUT_PIN, ledcChannel);
+    pinMode(ANALOG_PIN, INPUT);
+    Serial.begin(115200);
+    servo.begin(DIRECTION_PIN, PULSE_PIN, COUNT_PIN);
+    servo.setPID(0.1, 0.0100000, 0.0100000);
 }
 
 void loop() {
-    setFrequency(uint32_t(20000));
-    delay(1000);
+    if (lastPrint + 100 < millis()) {
+        // Serial.println(analogRead(ANALOG_PIN));
+        //  Serial.print(millis());
+        //  Serial.print("; ");
+        //  Serial.println(position);
+        lastPrint = millis();
+    }
+
+    if (lastUpdate + 10 < millis()) {
+        lastUpdate = millis();
+
+        uint16_t targetPosition =
+            map(analogRead(ANALOG_PIN), 0, 4095, 0, MAX_POSITION);
+
+        // if (state) {
+        //     targetPosition = 0;
+        // } else {
+        //     targetPosition = MAX_POSITION;
+        // }
+        position = servo.update(targetPosition);
+    }
 }
