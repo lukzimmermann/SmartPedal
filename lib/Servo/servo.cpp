@@ -3,9 +3,9 @@
 #include <math.h>
 
 uint8_t ledcChannel = 0;
-const uint16_t MAX_FREQUENCY = 3000;  // 44800;
+const uint16_t MAX_FREQUENCY = 44800;  // 44800;
 bool Servo::direction = true;
-volatile long Servo::pulseCount = 8000;
+volatile long Servo::pulseCount = 0;
 unsigned long Servo::lastPulseTime = 0;
 unsigned long Servo::currentFrequency = 0;
 
@@ -32,12 +32,9 @@ void Servo::setPID(double kp, double ki, double kd) {
 long Servo::update(long targetPosition) {
     setPoint = targetPosition;
     input = pulseCount;
-    delay(50);
+    delay(1);
 
     pid.Compute();
-
-    // int16_t rawFrequency =
-    //     map(output * 10000, 0, 2550000, -1 * MAX_FREQUENCY, MAX_FREQUENCY);
 
     double rawFrequency = (output - 0.0) *
                               (MAX_FREQUENCY - -1.0 * MAX_FREQUENCY) /
@@ -50,20 +47,9 @@ long Servo::update(long targetPosition) {
         direction = true;
     }
 
-    if (pulseCount > 8000) {
-        pulseCount = 8000;
-        // direction = false;
-    }
-
-    if (pulseCount < 0) {
-        // direction = true;
-        pulseCount = 0;
-    }
-
     digitalWrite(directionPin, direction);
 
-    uint32_t newFreq = abs(rawFrequency);
-    // uint32_t newFreq = targetPosition;
+    uint32_t newFreq = abs(rawFrequency + 100);
 
     uint8_t resolution = 10;
     if (newFreq < 3000) {
